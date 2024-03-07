@@ -5,9 +5,7 @@ require("dotenv").config();
 
 module.exports = {
     login: (req, res) => {
-        console.log(process.env, "-----------1");
         const { username, password } = req.body;
-        console.log("🚀 ~ username:", username, password);
         userModel.getUsers(async (err, users) => {
             if (err) throw err;
             const user = users.find((user) => {
@@ -24,7 +22,18 @@ module.exports = {
                             id: user.id,
                             username: user.username,
                         },
-                        process.env.JWT_SECRET
+                        process.env.JWT_SECRET,
+                        { expiresIn: "15s" }
+                    );
+                    const refreshToken = jwt.sign(
+                        {
+                            id: user.id,
+                            username: user.username,
+                        },
+                        process.env.REFRESH_SECRET,
+                        {
+                            expiresIn: "30d",
+                        }
                     );
                     res.json({
                         status: 200,
@@ -32,6 +41,7 @@ module.exports = {
                             id: user.id,
                             username: user.username,
                             token: token,
+                            refreshToken: refreshToken,
                         },
                     });
                 } else {
@@ -82,6 +92,15 @@ module.exports = {
                     },
                 });
             }
+        });
+    },
+    getUsers: (req, res) => {
+        userModel.getUsers((err, users) => {
+            if (err) throw err;
+            res.json({
+                status: 200,
+                data: users,
+            });
         });
     },
 };

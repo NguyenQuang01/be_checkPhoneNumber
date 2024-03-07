@@ -9,7 +9,9 @@ router.get("", (req, res) => {
 router.post("/login", userController.login);
 
 router.post("/register", userController.addUser);
-router.get("/:id", (req, res) => {
-    res.json({ name: `id: ${req.params.id}` });
-});
+router.get(
+    "/account/list",
+    authMiddleware.authenticateToken,
+    userController.getUsers
+);
 module.exports = router;
