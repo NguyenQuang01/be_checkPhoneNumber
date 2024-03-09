@@ -5,11 +5,11 @@ require("dotenv").config();
 
 module.exports = {
     login: (req, res) => {
-        const { username, password } = req.body;
+        const { phone, password } = req.body;
         userModel.getUsers(async (err, users) => {
             if (err) throw err;
             const user = users.find((user) => {
-                return user.username === username;
+                return user.phone === phone;
             });
             if (user) {
                 const passwordMatch = await bcrypt.compare(
@@ -20,7 +20,7 @@ module.exports = {
                     const token = jwt.sign(
                         {
                             id: user.id,
-                            username: user.username,
+                            phone: user.phone,
                         },
                         process.env.JWT_SECRET,
                         { expiresIn: "15s" }
@@ -28,7 +28,7 @@ module.exports = {
                     const refreshToken = jwt.sign(
                         {
                             id: user.id,
-                            username: user.username,
+                            phone: user.phone,
                         },
                         process.env.REFRESH_SECRET,
                         {
@@ -39,7 +39,7 @@ module.exports = {
                         status: 200,
                         data: {
                             id: user.id,
-                            username: user.username,
+                            phone: user.phone,
                             token: token,
                             refreshToken: refreshToken,
                         },
@@ -48,7 +48,7 @@ module.exports = {
                     res.json({
                         status: 400,
                         data: {
-                            message: "Invalid username or password",
+                            message: "Invalid phone or password",
                         },
                     });
                 }
@@ -56,24 +56,27 @@ module.exports = {
                 res.json({
                     status: 400,
                     data: {
-                        message: "Invalid username or password",
+                        message: "Invalid phone or password",
                     },
                 });
             }
         });
     },
     addUser: (req, res) => {
-        const { username, password } = req.body;
+        const { phone, password, fullName, email } = req.body;
         userModel.getUsers(async (err, users) => {
             if (err) throw err;
 
-            const checkUsername = users.some(
-                (user) => user.username !== username
-            );
-            if (checkUsername) {
+            const checkPhone = users.some((user) => user.phone !== phone);
+            if (checkPhone) {
                 const hashedPassword = await bcrypt.hash(password, 10);
                 userModel.addUser(
-                    { username: username, password: hashedPassword },
+                    {
+                        phone: phone,
+                        password: hashedPassword,
+                        fullName: fullName,
+                        email: email,
+                    },
                     (err) => {
                         if (err) throw err;
                         res.json({
@@ -88,7 +91,7 @@ module.exports = {
                 res.json({
                     status: 400,
                     data: {
-                        message: "Username already exists",
+                        message: "Phone already exists",
                     },
                 });
             }

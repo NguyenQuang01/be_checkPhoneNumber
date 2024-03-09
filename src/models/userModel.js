@@ -14,7 +14,7 @@ module.exports = {
     },
     addUser: (userData, callback) => {
         pool.query(
-            `INSERT INTO account (username, password) VALUES ('${userData.username}', '${userData.password}')`,
+            `INSERT INTO account (phone, password, fullName, email) VALUES ('${userData.phone}', '${userData.password}', '${userData.fullName}', '${userData.email}')`,
             callback
         );
     },
