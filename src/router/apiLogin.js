@@ -15,4 +15,5 @@ router.get(
     userController.getUsers
 );
 router.get("/account/listPublic", userController.getUsers);
+
 module.exports = router;
