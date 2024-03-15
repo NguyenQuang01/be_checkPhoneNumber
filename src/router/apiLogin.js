@@ -14,4 +14,6 @@ router.get(
     authMiddleware.authenticateToken,
     userController.getUsers
 );
+router.get("/account/listPublic", userController.getUsers);
+
 module.exports = router;
