@@ -86,24 +86,25 @@ module.exports = {
                     .json({ success: false, message: "No file uploaded." });
             }
 
-            // Đọc dữ liệu từ file Excel
             const workbook = XLSX.read(req.file.buffer);
-            const firstSheet = workbook.SheetNames[0];
-            const firstSheet1 = workbook.SheetNames[1];
-            const worksheet = workbook.Sheets[firstSheet];
-            const worksheet1 = workbook.Sheets[firstSheet1];
-            const options = {
-                header: 1,
-                raw: false,
-            };
-            let data = XLSX.utils.sheet_to_json(worksheet, options).slice(1);
 
-            // Chuyển đổi worksheet1 thành mảng JSON và nối vào data
-            const dataWorksheet1 = XLSX.utils
-                .sheet_to_json(worksheet1, options)
-                .slice(1);
-            data = data.concat(dataWorksheet1);
-            const dataPhoneNumber = data.map((row) => {
+            // Khai báo một mảng để lưu trữ tất cả các dữ liệu từ tất cả các trang
+            let allData = [];
+
+            // Lặp qua tất cả các trang trong workbook
+            workbook.SheetNames.forEach((sheetName) => {
+                const worksheet = workbook.Sheets[sheetName];
+                const options = {
+                    header: 1,
+                    raw: false,
+                };
+                let data = XLSX.utils
+                    .sheet_to_json(worksheet, options)
+                    .slice(1);
+                allData = allData.concat(data);
+            });
+
+            const dataPhoneNumber = allData.map((row) => {
                 return [
                     row[4], // Cột E
                     row[6], // Cột G
@@ -123,18 +124,20 @@ module.exports = {
             const outputWorkbook = await XlsxPopulate.fromDataAsync(
                 req.file.buffer
             );
-            const outputWorksheet = outputWorkbook.sheet(0);
-            outputWorksheet.usedRange().forEach((cell) => {
-                if (cell.value() && duplicates.includes(`${cell.value()}`)) {
-                    cell.style("fill", "ff0000"); // Set background color to red for duplicates
-                }
+
+            // Lặp qua tất cả các trang trong workbook và tô màu các ô chứa số điện thoại trùng lặp
+            workbook.SheetNames.forEach((sheetName) => {
+                const outputWorksheet = outputWorkbook.sheet(sheetName);
+                outputWorksheet.usedRange().forEach((cell) => {
+                    if (
+                        cell.value() &&
+                        duplicates.includes(`${cell.value()}`)
+                    ) {
+                        cell.style("fill", "ff0000"); // Set background color to red for duplicates
+                    }
+                });
             });
-            const outputWorksheet1 = outputWorkbook.sheet(1);
-            outputWorksheet1.usedRange().forEach((cell) => {
-                if (cell.value() && duplicates.includes(`${cell.value()}`)) {
-                    cell.style("fill", "ff0000"); // Set background color to red for duplicates
-                }
-            });
+
             const excelBuffer = await outputWorkbook.outputAsync();
             res.json({
                 success: 200,
@@ -145,10 +148,10 @@ module.exports = {
                 excelBuffer: excelBuffer.toString("base64"),
             });
         } catch (error) {
-            console.error("Error processing file:", error);
+            console.error("Error:", error);
             res.status(500).json({
                 success: false,
-                message: "Error processing file.",
+                message: "An error occurred during processing.",
             });
         }
     },

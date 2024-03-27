@@ -7,6 +7,14 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 // parse application/json
 app.use(bodyParser.json());
+//cors
+app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE");
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "*");
+    next();
+});
+
 app.use("/v1/", routerCheckPhoneNumber);
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`);
